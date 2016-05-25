@@ -4,18 +4,19 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.pedro.mx.trenesito_v2.Fragments.FragmentoDirecciones;
+import android.pedro.mx.trenesito_v2.Fragments.FragmentoPerfil;
+import android.pedro.mx.trenesito_v2.Fragments.FragmentoTarjetas;
 import android.pedro.mx.trenesito_v2.Models.Iglesia;
-import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageView;
 
-import com.bumptech.glide.Glide;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by 102A-PedroCanche on 25/05/16.
@@ -25,25 +26,14 @@ public class DetailActivity extends AppCompatActivity {
     private static final String EXTRA_NAME = "android.pedro.mx.trenesito_v2.name";
     private static final String EXTRA_DRAWABLE = "android.pedro.mx.trenesito_v2.drawable";
 
-    /**
-     * Inicia una nueva instancia de la actividad
-     *
-     * @param activity Contexto desde donde se lanzará
-     * @param title    Item a procesar
-     */
+    ViewPager mViewPager;
+
+
     public static void createInstance(Activity activity, Iglesia title) {
         Intent intent = getLaunchIntent(activity, title);
         activity.startActivity(intent);
     }
 
-    /**
-     * Construye un Intent a partir del contexto y la actividad
-     * de detalle.
-     *
-     * @param context Contexto donde se inicia
-     * @param iglesia    Identificador de la chica
-     * @return Intent listo para usar
-     */
     public static Intent getLaunchIntent(Context context, Iglesia iglesia) {
         Intent intent = new Intent(context, DetailActivity.class);
         intent.putExtra(EXTRA_NAME, iglesia.getTitle());
@@ -55,33 +45,17 @@ public class DetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
-
-        setToolbar();// Añadir action bar
-        if (getSupportActionBar() != null) // Habilitar up button
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        Intent i = getIntent();
-        String name = i.getStringExtra(EXTRA_NAME);
-        int idDrawable = i.getIntExtra(EXTRA_DRAWABLE, -1);
-
-        CollapsingToolbarLayout collapser =
-                (CollapsingToolbarLayout) findViewById(R.id.collapser);
-        collapser.setTitle(name); // Cambiar título
-
-        loadImageParallax(idDrawable);// Cargar Imagen
-
-        // Setear escucha al FAB
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        showSnackBar("Opción de Chatear");
-                    }
-                }
-        );
+        setToolbar(); // Añadir la toolbar
 
 
+        // Setear adaptador al viewpager.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        setupViewPager(mViewPager);
+
+        // Preparar las pestañas
+        TabLayout tabs = (TabLayout) findViewById(R.id.tabs);
+
+        tabs.setupWithViewPager(mViewPager);
     }
 
     private void setToolbar() {
@@ -90,53 +64,48 @@ public class DetailActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
     }
 
-    /**
-     * Se carga una imagen aleatoria para el detalle
-     */
-    private void loadImageParallax(int id) {
-        ImageView image = (ImageView) findViewById(R.id.image_paralax);
-        // Usando Glide para la carga asíncrona
-        Glide.with(this)
-                .load(id)
-                .centerCrop()
-                .into(image);
+    private void setupViewPager(ViewPager viewPager) {
+        AdaptadorSecciones adapter = new AdaptadorSecciones(getSupportFragmentManager());
+        adapter.addFragment(new FragmentoPerfil(), getString(R.string.titulo_tab_perfil));
+        adapter.addFragment(new FragmentoDirecciones(), getString(R.string.titulo_tab_direcciones));
+        adapter.addFragment(new FragmentoTarjetas(), getString(R.string.titulo_tab_tarjetas));
+        viewPager.setAdapter(adapter);
     }
+
+
 
     /**
-     * Proyecta una {@link Snackbar} con el string usado
-     *
-     * @param msg Mensaje
+     * Un {@link FragmentStatePagerAdapter} que gestiona las secciones, fragmentos y
+     * títulos de las pestañas
      */
-    private void showSnackBar(String msg) {
-        Snackbar
-                .make(findViewById(R.id.coordinator), msg, Snackbar.LENGTH_LONG)
-                .show();
-    }
+    public class AdaptadorSecciones extends FragmentStatePagerAdapter {
+        private final List<android.support.v4.app.Fragment> fragmentos = new ArrayList<>();
+        private final List<String> titulosFragmentos = new ArrayList<>();
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.detail, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        switch (id) {
-            case R.id.action_settings:
-                showSnackBar("Se abren los ajustes");
-                return true;
-            case R.id.action_add:
-                showSnackBar("Añadir a contactos");
-                return true;
-            case R.id.action_favorite:
-                showSnackBar("Añadir a favoritos");
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        public AdaptadorSecciones(FragmentManager fm) {
+            super(fm);
         }
 
 
+        @Override
+        public android.support.v4.app.Fragment getItem(int position) {
+            return fragmentos.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return fragmentos.size();
+        }
+
+        public void addFragment(android.support.v4.app.Fragment fragment, String title) {
+            fragmentos.add(fragment);
+            titulosFragmentos.add(title);
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return titulosFragmentos.get(position);
+        }
     }
+
 }
