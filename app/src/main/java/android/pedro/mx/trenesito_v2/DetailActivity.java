@@ -8,6 +8,7 @@ import android.pedro.mx.trenesito_v2.Fragments.FragmentoDirecciones;
 import android.pedro.mx.trenesito_v2.Fragments.FragmentoPerfil;
 import android.pedro.mx.trenesito_v2.Fragments.FragmentoTarjetas;
 import android.pedro.mx.trenesito_v2.Models.Iglesia;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
@@ -28,12 +29,25 @@ public class DetailActivity extends AppCompatActivity {
 
     ViewPager mViewPager;
 
-
+    /**
+     * Inicia una nueva instancia de la actividad
+     *
+     * @param activity Contexto desde donde se lanzará
+     * @param title    Item a procesar
+     */
     public static void createInstance(Activity activity, Iglesia title) {
         Intent intent = getLaunchIntent(activity, title);
         activity.startActivity(intent);
     }
 
+    /**
+     * Construye un Intent a partir del contexto y la actividad
+     * de detalle.
+     *
+     * @param context Contexto donde se inicia
+     * @param iglesia    Identificador de la chica
+     * @return Intent listo para usar
+     */
     public static Intent getLaunchIntent(Context context, Iglesia iglesia) {
         Intent intent = new Intent(context, DetailActivity.class);
         intent.putExtra(EXTRA_NAME, iglesia.getTitle());
@@ -47,6 +61,14 @@ public class DetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_detail);
         setToolbar(); // Añadir la toolbar
 
+        if (getSupportActionBar() != null) // Habilitar up button
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        Intent i = getIntent();
+        String name = i.getStringExtra(EXTRA_NAME);
+        CollapsingToolbarLayout collapser =
+                (CollapsingToolbarLayout) findViewById(R.id.collapser);
+        collapser.setTitle(name); // Cambiar título
 
         // Setear adaptador al viewpager.
         mViewPager = (ViewPager) findViewById(R.id.pager);
